@@ -4,16 +4,19 @@ cflags = -I efi -target x86_64-pc-win32-coff -fno-stack-protector -fshort-wchar 
 ld = lld-link
 lflags = -subsystem:efi_application -nodefaultlib -dll
 
-all : main.efi memmap.efi
+BUILDS = ../builds/uefi
 
-main.efi : ../builds/uefi/main.obj
-	$(ld) $(lflags) -entry:efi_main $< -out:../builds/uefi/$@
+SRC = $(wildcard *.c)
+OBJ = ${SRC:%.c=${BUILDS}/%.obj} 
+EFI = ${SRC:%.c=${BUILDS}/%.efi} 
 
-memmap.efi : ../builds/uefi/memmap.obj
-	$(ld) $(lflags) -entry:efi_main $< -out:../builds/uefi/$@
 
-../builds/uefi/memmap.obj : memmap.c
+all : ${EFI}
+
+${BUILDS}/%.obj: %.c
 	$(cc) $(cflags) -c $< -o $@
-	
-../builds/uefi/main.obj : main.c
-	$(cc) $(cflags) -c $< -o $@
+
+${BUILDS}/%.efi: ${BUILDS}/%.obj
+	$(ld) $(lflags) -entry:efi_main $< -out:$@
+
+print-%  : ; @echo $* = $($*)
